@@ -1,0 +1,40 @@
+- name: Search for the latest CentOS Atomic AMI 
+  ec2_ami_facts:
+    region: "{{ aws_region }}"
+    owners: 410186602215
+    filters:
+      name: "CentOS Atomic host 7 x86_64 HVM EBS*"
+  register: ami_result
+
+- name: Create ethereum launch config
+  ec2_lc:
+    name: ethereum-{{ eth_tag }}
+    image_id: "{{ ami_result.images[0].image_id }}"
+    key_name: "{{ key_name }}"
+    region: "{{ aws_region }}"
+    security_groups: "{{ sg.group_id  }}"
+    ebs_optimized: yes
+    instance_type: "{{ instance_type }}"
+    volumes:
+      - device_name: /dev/sda1
+        volume_size: 100
+        delete_on_termination: true
+        volume_type: gp2
+    assign_public_ip: yes
+    user_data: |
+      #!/bin/bash
+      docker run -d --restart unless-stopped -p 30303:30303/udp -p 30303:30303 {{ dockerhub_user }}/ethereum:{{ eth_tag }}
+  register: lc
+
+- ec2_asg:
+    name: ethereum
+    launch_config_name: "{{ lc.name }}"
+    health_check_type: EC2
+    vpc_zone_identifier: [ "{{ subnet_1.subnet.id }}" ]
+    replace_all_instances: yes
+    min_size: 1
+    max_size: 1
+    desired_capacity: 1
+    region: "{{ aws_region }}"
+    tags:
+      - App: ethereum

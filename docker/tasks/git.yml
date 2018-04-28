@@ -1,0 +1,8 @@
+- name: Clone go-ethereum repo 
+  git:
+    repo: git@github.com:ethereum/go-ethereum
+    depth: 1
+    force: yes
+    version: "{{ eth_tag }}"
+    verify_commit: yes
+    dest: /tmp/go-ethereum

@@ -1,0 +1,13 @@
+- name: Log into repository
+  docker_login:
+    username: "{{ dockerhub_user }}"
+    password: "{{ dockerhub_pw }}"
+    email: "{{ dockerhub_email }}"
+
+
+- name: Build and push Docker image
+  docker_image:
+    name: "{{ dockerhub_user }}/ethereum"
+    tag: "{{ eth_tag }}"
+    path: /tmp/go-ethereum
+    push: yes

@@ -1,0 +1,8 @@
+aws_region: "us-east-1"
+my_ip: "71.218.47.65"
+key_name : "grant"
+instance_type: "c4.large"
+eth_tag: "v1.8.6"
+dockerhub_user: "grantsheehan"
+dockerhub_pw: ""
+dockerhub_email: "gsheehan@gmail.com"

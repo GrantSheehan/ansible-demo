@@ -1,5 +1,10 @@
 ---
 
 - hosts: local
-  roles:
-    - vpc
+  vars_files:
+    - vars.yml
+  tasks:
+    - include: docker/tasks/git.yml
+    - include: docker/tasks/docker.yml
+    - include: aws/tasks/vpc.yml
+    - include: aws/tasks/asg.yml

@@ -1,0 +1,75 @@
+- name: Create VPC
+  ec2_vpc_net:
+    name: ethereum
+    cidr_block: 10.10.0.0/16
+    region: "{{ aws_region }}" 
+    tags:
+      App: ethereum
+    tenancy: default
+  register: vpc
+
+- name: Create subnet_1
+  ec2_vpc_subnet:
+    state:  "present"
+    vpc_id: "{{ vpc.vpc.id }}"
+    cidr:   "10.10.0.0/18"
+    az:     "{{ aws_region }}a"
+    region: "{{ aws_region }}"
+    resource_tags:
+      App: ethereum
+  register: subnet_1
+
+- name: Create IGW
+  ec2_vpc_igw:
+    vpc_id: "{{ vpc.vpc.id }}"
+    region: "{{ aws_region }}"
+    state: "present"
+  register: igw
+
+- name: Create subnet_1 route table
+  ec2_vpc_route_table:
+    vpc_id: "{{ vpc.vpc.id }}"
+    region: "{{ aws_region }}"
+    tags:
+      App: ethereum
+    subnets:
+      - "{{ subnet_1.subnet.id }}"
+    routes:
+      - dest: "0.0.0.0/0"
+        gateway_id: "{{ igw.gateway_id }}"
+
+- name: Create SG
+  ec2_group:
+    name: ethereum
+    description: ethereum
+    vpc_id: "{{ vpc.vpc.id }}"
+    region: "{{ aws_region }}"
+    tags:
+       App: ethereum
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: "{{ my_ip }}/32"
+      - proto: udp
+        from_port: 30303
+        to_port: 30303
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 30303
+        to_port: 30303
+        cidr_ip: 0.0.0.0/0
+    rules_egress:
+      - proto: tcp
+        from_port: 443
+        to_port: 443
+        cidr_ip: 0.0.0.0/0
+      - proto: udp
+        from_port: 30303
+        to_port: 30303
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 30303
+        to_port: 30303
+        cidr_ip: 0.0.0.0/0
+  register: sg
